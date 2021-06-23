@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mirror_obstacle_detection</name>
+  <name>mirror_obstacle_detection_control</name>
   <version>0.0.0</version>
-  <description>The mirror_obstacle_detection package</description>
+  <description>The mirror_obstacle_detection_control package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
