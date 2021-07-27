@@ -2,7 +2,7 @@
 #include <std_msgs/String.h>
 #include <sensor_msgs/LaserScan.h>
 
-class PoseEstimate
+class DivideScanData
 {
 private:
     ros::NodeHandle nh_;
@@ -13,20 +13,20 @@ private:
     sensor_msgs::LaserScan scan_data_R_;
 
 public:
-    PoseEstimate();
+    DivideScanData();
     void publication(void);
     void Callback(const sensor_msgs::LaserScan::ConstPtr &msg);
-    void divide_scan_data(sensor_msgs::LaserScan input);
+    void divide(sensor_msgs::LaserScan input);
 };
 
-PoseEstimate::PoseEstimate()
+DivideScanData::DivideScanData()
 {
     pub_L = nh_.advertise<sensor_msgs::LaserScan>("/scan_L", 1);
     pub_R = nh_.advertise<sensor_msgs::LaserScan>("/scan_R", 1);
-    sub_ = nh_.subscribe("scan", 5, &PoseEstimate::Callback, this);
+    sub_ = nh_.subscribe("scan", 5, &DivideScanData::Callback, this);
 }
 
-void PoseEstimate::divide_scan_data(sensor_msgs::LaserScan input)
+void DivideScanData::divide(sensor_msgs::LaserScan input)
 {
 
     int target_begin_L, target_size_L;
@@ -74,15 +74,15 @@ void PoseEstimate::divide_scan_data(sensor_msgs::LaserScan input)
     */
 }
 
-void PoseEstimate::publication(void)
+void DivideScanData::publication(void)
 {
     pub_L.publish(scan_data_L_);
     pub_R.publish(scan_data_R_);
 }
 
-void PoseEstimate::Callback(const sensor_msgs::LaserScan::ConstPtr &msg)
+void DivideScanData::Callback(const sensor_msgs::LaserScan::ConstPtr &msg)
 {
-    divide_scan_data(*msg);
+    divide(*msg);
     publication();
 }
 
@@ -90,12 +90,12 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "talker");
 
-    PoseEstimate pose_estimate;
+    DivideScanData divide_scan_data;
 
     ros::Rate loop_rate(10);
     while (ros::ok())
     {
-        //pose_estimate.publication();
+        //divide_scan_data.publication();
         ros::spinOnce();
         loop_rate.sleep();
     }
