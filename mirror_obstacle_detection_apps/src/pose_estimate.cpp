@@ -29,8 +29,7 @@ void RosWithClass::Publication(void)
 {
     // pub_msg.data = "message";
     //   pub_m.publish(pub_msg);
-
-    //pub.publish(scan_msg);
+    pub.publish(scan_msg);
 }
 
 void RosWithClass::Callback(const sensor_msgs::LaserScan::ConstPtr &msg)
@@ -41,13 +40,20 @@ void RosWithClass::Callback(const sensor_msgs::LaserScan::ConstPtr &msg)
         msg->ranges[i] > msg->range_max || // 測定範囲外の場合
         std::isnan(msg->ranges[i]))        // 無限遠の場合
     {
-        ROS_INFO("front-range: measurement error");
+        //ROS_INFO("front-range: measurement error");
     }
     else
     {
-        ROS_INFO("front-range: %0.3f",
-                 msg->ranges[msg->ranges.size() / 2]);
+        //ROS_INFO("front-range: %0.3f",msg->ranges[msg->ranges.size() / 2]);
     }
+
+    ROS_INFO("range.size %d", msg->ranges.size());
+    ROS_INFO("angle_min %f", msg->angle_min * 57.3);
+    ROS_INFO("angle_max %f", msg->angle_max * 57.3);
+    ROS_INFO("angle_increment %f", msg->angle_increment * 57.3);
+    float num = (msg->angle_max - msg->angle_min) / msg->angle_increment;
+    ROS_INFO("angle_num %f", num);
+    scan_msg = *msg;
 }
 
 int main(int argc, char **argv)
