@@ -6,10 +6,10 @@ class RosWithClass
 {
 private:
     ros::NodeHandle nh;
-    ros::Publisher pub_m;
+    // ros::Publisher pub_m;
     ros::Publisher pub;
     ros::Subscriber sub;
-    std_msgs::String pub_msg;
+    //   std_msgs::String pub_msg;
     sensor_msgs::LaserScan scan_msg;
 
 public:
@@ -20,15 +20,15 @@ public:
 
 RosWithClass::RosWithClass()
 {
-    pub_m = nh.advertise<std_msgs::String>("/pub_msg", 1);
+    //  pub_m = nh.advertise<std_msgs::String>("/pub_msg", 1);
     pub = nh.advertise<sensor_msgs::LaserScan>("/scan_set", 1);
     sub = nh.subscribe("scan", 5, &RosWithClass::Callback, this);
 }
 
 void RosWithClass::Publication(void)
 {
-    pub_msg.data = "message";
-    pub_m.publish(pub_msg);
+    // pub_msg.data = "message";
+    //   pub_m.publish(pub_msg);
 
     //pub.publish(scan_msg);
 }
