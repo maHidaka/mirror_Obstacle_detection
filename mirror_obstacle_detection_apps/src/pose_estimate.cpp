@@ -5,95 +5,84 @@
 class PoseEstimate
 {
 private:
-    ros::NodeHandle nh;
-    // ros::Publisher pub_m;
-    ros::Publisher pub;
-    ros::Subscriber sub;
-    //   std_msgs::String pub_msg;
-    sensor_msgs::LaserScan scan_msg;
-    void
+    ros::NodeHandle nh_;
+    ros::Publisher pub_L;
+    ros::Publisher pub_R;
+    ros::Subscriber sub_;
+    sensor_msgs::LaserScan scan_data_L_;
+    sensor_msgs::LaserScan scan_data_R_;
 
-        public : PoseEstimate();
-    void Publication(void);
+public:
+    PoseEstimate();
+    void publication(void);
     void Callback(const sensor_msgs::LaserScan::ConstPtr &msg);
-    void filter(sensor_msgs::LaserScan input);
+    void divide_scan_data_L(sensor_msgs::LaserScan input);
 };
 
 PoseEstimate::PoseEstimate()
 {
-    //  pub_m = nh.advertise<std_msgs::String>("/pub_msg", 1);
-    pub = nh.advertise<sensor_msgs::LaserScan>("/scan_set", 1);
-    sub = nh.subscribe("scan", 5, &PoseEstimate::Callback, this);
+    pub_L = nh_.advertise<sensor_msgs::LaserScan>("/scan_L", 1);
+    pub_R = nh_.advertise<sensor_msgs::LaserScan>("/scan_R", 1);
+    sub_ = nh_.subscribe("scan", 5, &PoseEstimate::Callback, this);
 }
 
-void PoseEstimate::filter(sensor_msgs::LaserScan input)
+void PoseEstimate::divide_scan_data_L(sensor_msgs::LaserScan input)
 {
 
-    int start_pos, target_size;
-    float start_angle = -2.35;
-    float end_angle = 0.0;
-    /*
-    start_pos = (input.angle_min - start_angle) / input.angle_increment;
-    target_size = (end_angle - start_angle) / input.angle_increment;
-*/
-    scan_msg = input;
-    //start_pos = (input.angle_min - start_angle) / input.angle_increment;
+    int target_begin_L, target_size_L;
+    float angle_begin_L = -2.35;
+    float angle_end_L = 0.0;
 
-    ROS_INFO("ranges.size() %d", scan_msg.ranges.size());
-    ROS_INFO("angle_min %f", scan_msg.angle_min);
-    ROS_INFO("angle_max %f", scan_msg.angle_max);
-    start_pos = int(start_angle - input.angle_min) / input.angle_increment;
-    target_size = (end_angle - start_angle) / input.angle_increment;
-    ROS_INFO("start_pos %d", start_pos);
-    ROS_INFO("target_size %d", target_size);
-    scan_msg.ranges.erase(scan_msg.ranges.begin(), scan_msg.ranges.begin() + int(start_pos));
-    scan_msg.ranges.erase(scan_msg.ranges.begin() + target_size, scan_msg.ranges.end());
+    int target_begin_R, target_size_R;
+    float angle_begin_R = 0.0;
+    float angle_end_R = 2.09;
 
-    scan_msg.angle_min = start_angle;
-    scan_msg.angle_max = end_angle;
-    //scan_msg.ranges.erase(scan_msg.ranges.begin() + target_size, scan_msg.ranges.end());
-    /*
-    scan_msg.ranges.erase(scan_msg.ranges.begin(), scan_msg.ranges.begin() + start_pos);
-    scan_msg.ranges.erase(scan_msg.ranges.begin() + target_size, scan_msg.ranges.end());
-    scan_msg.range_min = start_angle;
-    scan_msg.range_max = end_angle;
-    */
-    ROS_INFO("_ranges.size() %d", scan_msg.ranges.size());
-    ROS_INFO("angle_min %f", scan_msg.angle_min);
-    ROS_INFO("angle_max %f", scan_msg.angle_max);
-    ROS_INFO("-----------------------------------------");
+    scan_data_L_ = input;
+    target_begin_L = (angle_begin_L - input.angle_min) / input.angle_increment;
+    target_size_L = (angle_end_L - angle_begin_L) / input.angle_increment;
+    scan_data_L_.ranges.erase(scan_data_L_.ranges.begin(), scan_data_L_.ranges.begin() + int(target_begin_L));
+    scan_data_L_.ranges.erase(scan_data_L_.ranges.begin() + target_size_L, scan_data_L_.ranges.end());
+    scan_data_L_.angle_min = angle_begin_L;
+    scan_data_L_.angle_max = angle_end_L;
+
+    scan_data_R_ = input;
+    target_begin_R = (angle_begin_R - input.angle_min) / input.angle_increment;
+    target_size_R = (angle_end_R - angle_begin_R) / input.angle_increment;
+    scan_data_R_.ranges.erase(scan_data_R_.ranges.begin(), scan_data_R_.ranges.begin() + int(target_begin_R));
+    scan_data_R_.ranges.erase(scan_data_R_.ranges.begin() + target_size_R, scan_data_R_.ranges.end());
+    scan_data_R_.angle_min = angle_begin_R;
+    scan_data_R_.angle_max = angle_end_R;
+
+    ROS_INFO("input.angle_min %f", input.angle_min);
+    ROS_INFO("input.angle_max %f", input.angle_max);
+    ROS_INFO("scan_data_R_.angle_min %f", scan_data_R_.angle_min);
+    ROS_INFO("scan_data_R_.angle_max %f", scan_data_R_.angle_max);
+    ROS_INFO("scan_data_L_.angle_min %f", scan_data_L_.angle_min);
+    ROS_INFO("scan_data_L_.angle_max %f", scan_data_L_.angle_max);
+    ROS_INFO("____soiya___________");
+    ROS_INFO("input");
+    ROS_INFO("input_size_calc %f", (input.angle_max - input.angle_min) / input.angle_increment);
+    ROS_INFO("input_size %d", input.ranges.size());
+    ROS_INFO("L");
+    ROS_INFO("scan_L_size_calc %f", (angle_end_L - angle_begin_L) / input.angle_increment);
+    ROS_INFO("scan_L_size %d", scan_data_L_.ranges.size());
+    ROS_INFO("R");
+    ROS_INFO("scan_R_size_calc %f", (angle_end_R - angle_begin_R) / input.angle_increment);
+    ROS_INFO("scan_R_size %d", scan_data_R_.ranges.size());
+
+    ROS_INFO("___________________________________");
 }
 
-void PoseEstimate::Publication(void)
+void PoseEstimate::publication(void)
 {
-    // pub_msg.data = "message";
-    //   pub_m.publish(pub_msg);
-    pub.publish(scan_msg);
+    pub_L.publish(scan_data_L_);
+    pub_R.publish(scan_data_R_);
 }
 
 void PoseEstimate::Callback(const sensor_msgs::LaserScan::ConstPtr &msg)
 {
-
-    int i = msg->ranges.size() / 2;
-    if (msg->ranges[i] < msg->range_min || // エラー値の場合
-        msg->ranges[i] > msg->range_max || // 測定範囲外の場合
-        std::isnan(msg->ranges[i]))        // 無限遠の場合
-    {
-        //ROS_INFO("front-range: measurement error");
-    }
-    else
-    {
-        //ROS_INFO("front-range: %0.3f",msg->ranges[msg->ranges.size() / 2]);
-    }
-    /*
-    ROS_INFO("range.size %d", msg->ranges.size());
-    ROS_INFO("angle_min %f", msg->angle_min * 57.3);
-    ROS_INFO("angle_max %f", msg->angle_max * 57.3);
-    ROS_INFO("angle_increment %f", msg->angle_increment * 57.3);
-    */
-    float num = (msg->angle_max - msg->angle_min) / msg->angle_increment;
-    //ROS_INFO("angle_num %f", num);
-    filter(*msg);
+    divide_scan_data_L(*msg);
+    publication();
 }
 
 int main(int argc, char **argv)
@@ -105,7 +94,7 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(10);
     while (ros::ok())
     {
-        pose_estimate.Publication();
+        //pose_estimate.publication();
         ros::spinOnce();
         loop_rate.sleep();
     }
