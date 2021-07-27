@@ -2,7 +2,7 @@
 #include <std_msgs/String.h>
 #include <sensor_msgs/LaserScan.h>
 
-class RosWithClass
+class PoseEstimate
 {
 private:
     ros::NodeHandle nh;
@@ -11,22 +11,22 @@ private:
     ros::Subscriber sub;
     //   std_msgs::String pub_msg;
     sensor_msgs::LaserScan scan_msg;
+    void
 
-public:
-    RosWithClass();
+        public : PoseEstimate();
     void Publication(void);
     void Callback(const sensor_msgs::LaserScan::ConstPtr &msg);
     void filter(sensor_msgs::LaserScan input);
 };
 
-RosWithClass::RosWithClass()
+PoseEstimate::PoseEstimate()
 {
     //  pub_m = nh.advertise<std_msgs::String>("/pub_msg", 1);
     pub = nh.advertise<sensor_msgs::LaserScan>("/scan_set", 1);
-    sub = nh.subscribe("scan", 5, &RosWithClass::Callback, this);
+    sub = nh.subscribe("scan", 5, &PoseEstimate::Callback, this);
 }
 
-void RosWithClass::filter(sensor_msgs::LaserScan input)
+void PoseEstimate::filter(sensor_msgs::LaserScan input)
 {
 
     int start_pos, target_size;
@@ -64,14 +64,14 @@ void RosWithClass::filter(sensor_msgs::LaserScan input)
     ROS_INFO("-----------------------------------------");
 }
 
-void RosWithClass::Publication(void)
+void PoseEstimate::Publication(void)
 {
     // pub_msg.data = "message";
     //   pub_m.publish(pub_msg);
     pub.publish(scan_msg);
 }
 
-void RosWithClass::Callback(const sensor_msgs::LaserScan::ConstPtr &msg)
+void PoseEstimate::Callback(const sensor_msgs::LaserScan::ConstPtr &msg)
 {
 
     int i = msg->ranges.size() / 2;
@@ -100,12 +100,12 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "talker");
 
-    RosWithClass ros_with_class;
+    PoseEstimate pose_estimate;
 
     ros::Rate loop_rate(10);
     while (ros::ok())
     {
-        ros_with_class.Publication();
+        pose_estimate.Publication();
         ros::spinOnce();
         loop_rate.sleep();
     }
