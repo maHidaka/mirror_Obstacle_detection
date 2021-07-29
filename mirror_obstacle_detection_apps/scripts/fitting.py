@@ -24,9 +24,9 @@ class Fitting():
     def callback(self, data):
         # callback関数の処理をかく
         # print(data)
-        marker = self.calc_fitting_curve(data)
+        self.calc_fitting_curve(data)
 
-        print(marker)
+        # print(marker)
         #marker.header.stamp = data.header.stamp
         # self.Publisher(marker)
 
@@ -42,8 +42,14 @@ class Fitting():
             #print(range, angle)
             #print(self.getXY(range, angle))
             position = self.getXY(range, angle)
-            x.append(position[0])
-            y.append(position[1])
+
+            if not np.isnan(position[0]):
+                x.append(position[0])
+                y.append(position[1])
+            else:
+                print("range value is NaN")
+
+        #print(x, y)
         func = np.polyfit(np.array(x), np.array(y), 1)
         print(func)
 
