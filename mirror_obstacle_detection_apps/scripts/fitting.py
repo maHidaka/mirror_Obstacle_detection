@@ -35,8 +35,8 @@ class Fitting():
 
     def calc_fitting_curve(self, data):
         angle = data.angle_min
-        x = np.empty(0)
-        y = np.empty(0)
+        x = []
+        y = []
         for range in data.ranges:
             angle = angle + data.angle_increment
             #print(range, angle)
@@ -44,6 +44,8 @@ class Fitting():
             position = self.getXY(range, angle)
             x.append(position[0])
             y.append(position[1])
+        func = np.polyfit(np.array(x), np.array(y), 1)
+        print(func)
 
     def getXY(self, r, rad):
         # 度をラジアンに変換
