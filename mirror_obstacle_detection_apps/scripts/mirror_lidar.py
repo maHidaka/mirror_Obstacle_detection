@@ -20,16 +20,22 @@ class MirrorLiDAR():
         self.sub_scan = rospy.Subscriber('scan', LaserScan, self.callback)
         self.pub_scan_front = rospy.Publisher(
             'scan_front', LaserScan, queue_size=1)
+        self.pub_scan_right = rospy.Publisher(
+            'scan_right', LaserScan, queue_size=1)
+        self.pub_scan_left = rospy.Publisher(
+            'scan_left', LaserScan, queue_size=1)
         self.pub_marker = rospy.Publisher('fit_line', Marker, queue_size=1)
 
     def callback(self, data):
         front_data = self.divide_scan_data(data, -1, 1)
         right_data = self.divide_scan_data(data, 1.6, 2.09)
         left_data = self.divide_scan_data(data, -2.05, -1.5)
-        self.Publisher(left_data)
+        self.Publisher(front_data, right_data, left_data)
 
-    def Publisher(self, data):
-        self.pub_scan_front.publish(data)
+    def Publisher(self, front, right, left):
+        self.pub_scan_front.publish(front)
+        self.pub_scan_right.publish(right)
+        self.pub_scan_left.publish(left)
 
     def divide_scan_data(self, data, begin, end):
         input_data = copy.deepcopy(data)
