@@ -9,6 +9,7 @@ from sensor_msgs.msg import LaserScan
 from std_msgs.msg import String
 from std_msgs.msg import Header
 
+import copy
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -22,21 +23,21 @@ class MirrorLiDAR():
         self.pub_marker = rospy.Publisher('fit_line', Marker, queue_size=1)
 
     def callback(self, data):
-        #front_data = self.divide_scan_data(data, -1, 1)
+        front_data = self.divide_scan_data(data, -1, 1)
         right_data = self.divide_scan_data(data, 1.6, 2.09)
-        #left_data = self.divide_scan_data(data, -2.05, -1.5)
-        self.Publisher(front_data)
+        left_data = self.divide_scan_data(data, -2.05, -1.5)
+        self.Publisher(left_data)
 
     def Publisher(self, data):
         self.pub_scan_front.publish(data)
 
     def divide_scan_data(self, data, begin, end):
-        input_data = data
+        input_data = copy.deepcopy(data)
+        print(len(data.ranges))
         angle_rates = np.arange(
             input_data.angle_min, input_data.angle_max, input_data.angle_increment)
         target_index = np.where((angle_rates >= begin) & (angle_rates <= end))
         target_index = target_index[0]
-        print(target_index)
         target_ranges = input_data.ranges[target_index[0]:target_index[-1]]
         input_data.ranges = target_ranges
         input_data.angle_min = begin
