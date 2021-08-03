@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import rospy
+import tf
 from geometry_msgs.msg import Point
 from rospy.topics import Publisher
 from visualization_msgs.msg import Marker
@@ -176,15 +177,15 @@ class MirrorLiDAR():
         Al = func_L[0]
         Bl = func_L[1]
         Ax = (Ar + Al)/2
-        xtan = -Ax
-        th_x = np.degrees(np.arctan(xtan))
-
-        ytan = (Br - Bl) / (2*mirror_d)
+        ytan = -Ax
         th_y = np.degrees(np.arctan(ytan))
+
+        xtan = (Br - Bl) / (2*mirror_d)
+        th_x = np.degrees(np.arctan(xtan))
 
         return th_x, th_y
 
-    def coordinate_transform(self, data):
+    def coordinate_transform(self, front_scan_data, th_x, th_y):
 
         return soiya
 
