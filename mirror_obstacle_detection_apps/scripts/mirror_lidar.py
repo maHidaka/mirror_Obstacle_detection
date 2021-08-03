@@ -32,10 +32,16 @@ class MirrorLiDAR():
         right_data = self.divide_scan_data(data, 1.6, 2.09)
         left_data = self.divide_scan_data(data, -2.05, -1.5)
 
-        fit_r = self.calc_marker(
-            self.calc_fitting_curve(right_data), data.header.stamp)
-        fit_l = self.calc_marker(
-            self.calc_fitting_curve(left_data), data.header.stamp)
+        func_R, x_R = self.calc_fitting_curve(right_data)
+        line_pos_R = self.calc_positon_XY(func_R, x_R[0], x_R[1])
+        fit_r = self.calc_marker(line_pos_R, data.header.stamp)
+
+        func_L, x_L = self.calc_fitting_curve(left_data)
+        line_pos_L = self.calc_positon_XY(func_L, x_L[0], x_L[1])
+        fit_l = self.calc_marker(line_pos_L, data.header.stamp)
+
+        #fit_r = self.calc_marker(self.calc_fitting_curve(right_data), data.header.stamp)
+        #fit_l = self.calc_marker(self.calc_fitting_curve(left_data), data.header.stamp)
 
         self.pub_scan_front.publish(front_data)
         self.pub_scan_right.publish(right_data)
@@ -81,9 +87,21 @@ class MirrorLiDAR():
                 print("range value is NaN")
 
         fit_line = np.polyfit(np.array(x), np.array(y), 1)
-        pos = list(fit_line)
-        pos.extend([x[0], x[-1]])
-        return pos
+        #pos = list(fit_line)
+        #pos.extend([x[0], x[-1]])
+        func = list(fit_line)
+        pos = [x[0], x[-1]]
+
+        return func, pos
+
+    def calc_positon_XY(self, func, x1, x2):
+        a = func[0]
+        b = func[1]
+
+        y1 = a * x1 + b
+        y2 = a * x2 + b
+        position = [x1, y1, 0, x2, y2, 0]
+        return position
 
     def calc_marker(self, pos, time):
         marker_data = Marker()
@@ -117,15 +135,15 @@ class MirrorLiDAR():
         marker_data.points = []
 
         first_point = Point()
-        first_point.x = pos[2]
-        first_point.y = pos[0]*pos[2]+pos[1]
-        first_point.z = 0.0
+        first_point.x = pos[0]
+        first_point.y = pos[1]
+        first_point.z = pos[2]
         marker_data.points.append(first_point)
 
         second_point = Point()
         second_point.x = pos[3]
-        second_point.y = pos[0]*pos[3]+pos[1]
-        second_point.z = 0.0
+        second_point.y = pos[4]
+        second_point.z = pos[5]
         marker_data.points.append(second_point)
         return marker_data
 
