@@ -24,13 +24,24 @@ class MirrorLiDAR():
             'scan_right', LaserScan, queue_size=1)
         self.pub_scan_left = rospy.Publisher(
             'scan_left', LaserScan, queue_size=1)
-        self.pub_marker = rospy.Publisher('fit_line', Marker, queue_size=1)
+        self.pub_fit_r = rospy.Publisher('fit_line_R', Marker, queue_size=1)
+        self.pub_fit_l = rospy.Publisher('fit_line_L', Marker, queue_size=1)
 
     def callback(self, data):
         front_data = self.divide_scan_data(data, -1, 1)
         right_data = self.divide_scan_data(data, 1.6, 2.09)
         left_data = self.divide_scan_data(data, -2.05, -1.5)
-        self.Publisher(front_data, right_data, left_data)
+
+        fit_r = self.calc_marker(
+            self.calc_fitting_curve(right_data), data.header.stamp)
+        fit_l = self.calc_marker(
+            self.calc_fitting_curve(left_data), data.header.stamp)
+
+        self.pub_scan_front.publish(front_data)
+        self.pub_scan_right.publish(right_data)
+        self.pub_scan_left.publish(left_data)
+        self.pub_fit_r.publish(fit_r)
+        self.pub_fit_l.publish(fit_l)
 
     def Publisher(self, front, right, left):
         self.pub_scan_front.publish(front)
@@ -39,7 +50,6 @@ class MirrorLiDAR():
 
     def divide_scan_data(self, data, begin, end):
         input_data = copy.deepcopy(data)
-        print(len(data.ranges))
         angle_rates = np.arange(
             input_data.angle_min, input_data.angle_max, input_data.angle_increment)
         target_index = np.where((angle_rates >= begin) & (angle_rates <= end))
@@ -50,11 +60,74 @@ class MirrorLiDAR():
         input_data.angle_max = end
         return input_data
 
-    def calc_fitting_curve(self, data):
-        return soiya
+    def getXY(self, r, rad):
+        # 度をラジアンに変換
+        x = r * np.cos(rad)
+        y = r * np.sin(rad)
+        return x, y
 
-    def calc_marker(self, data):
-        return soiya
+    def calc_fitting_curve(self, data):
+        angle = data.angle_min
+        x = []
+        y = []
+        for range in data.ranges:
+            angle = angle + data.angle_increment
+            position = self.getXY(range, angle)
+
+            if not np.isnan(position[0]):
+                x.append(position[0])
+                y.append(position[1])
+            else:
+                print("range value is NaN")
+
+        fit_line = np.polyfit(np.array(x), np.array(y), 1)
+        pos = list(fit_line)
+        pos.extend([x[0], x[-1]])
+        return pos
+
+    def calc_marker(self, pos, time):
+        marker_data = Marker()
+        marker_data.header.frame_id = "laser"
+        marker_data.ns = "soiya"
+        marker_data.id = 0
+        marker_data.header.stamp = time
+        marker_data.action = Marker.ADD
+
+        marker_data.pose.position.x = 0.0
+        marker_data.pose.position.y = 0.0
+        marker_data.pose.position.z = 0.0
+
+        marker_data.pose.orientation.x = 0.0
+        marker_data.pose.orientation.y = 0.0
+        marker_data.pose.orientation.z = 0.0
+        marker_data.pose.orientation.w = 1.0
+
+        marker_data.color.r = 0.0
+        marker_data.color.g = 1.0
+        marker_data.color.b = 0.0
+        marker_data.color.a = 1.0
+
+        marker_data.scale.x = 0.005
+        marker_data.scale.y = 0.005
+        marker_data.scale.z = 0.005
+
+        marker_data.lifetime = rospy.Duration()
+        marker_data.type = Marker.LINE_STRIP
+
+        marker_data.points = []
+
+        first_point = Point()
+        first_point.x = pos[2]
+        first_point.y = pos[0]*pos[2]+pos[1]
+        first_point.z = 0.0
+        marker_data.points.append(first_point)
+
+        second_point = Point()
+        second_point.x = pos[3]
+        second_point.y = pos[0]*pos[3]+pos[1]
+        second_point.z = 0.0
+        marker_data.points.append(second_point)
+        return marker_data
 
     def convert_3d(self, data):
         return soiya
