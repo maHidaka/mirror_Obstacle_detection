@@ -170,15 +170,19 @@ class MirrorLiDAR():
         return position, func_3d
 
     def calc_base_vector(self, func_R, func_L):
+        mirror_d = 0.04
         Ar = func_R[0]
         Br = func_R[1]
         Al = func_L[0]
         Bl = func_L[1]
         Ax = (Ar + Al)/2
-        xtan = -1 / Ax
+        xtan = -Ax
         th_x = np.degrees(np.arctan(xtan))
-        
-        return th_x
+
+        ytan = (Br - Bl) / mirror_d
+        th_y = np.degrees(np.arctan(ytan))
+
+        return th_x, th_y
 
     def coordinate_transform(self, data):
 
