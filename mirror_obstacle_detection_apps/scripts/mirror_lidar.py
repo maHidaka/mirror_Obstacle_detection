@@ -41,10 +41,13 @@ class MirrorLiDAR():
         #fit_l = self.calc_marker(line_pos_L, data.header.stamp)
 
         bottom_r = self.convert_3d(func_R, x_R[0], x_R[1], 1)
-        fit_r = self.calc_marker(bottom_r, data.header.stamp)
+        fit_r = self.calc_marker(bottom_r[0], data.header.stamp)
 
         bottom_l = self.convert_3d(func_L, x_L[0], x_L[1], -1)
-        fit_l = self.calc_marker(bottom_l, data.header.stamp)
+        fit_l = self.calc_marker(bottom_l[0], data.header.stamp)
+
+        A = self.calc_base_vector(bottom_r[1], bottom_l[1])
+        print(A)
 
         self.pub_scan_front.publish(front_data)
         self.pub_scan_right.publish(right_data)
@@ -152,22 +155,33 @@ class MirrorLiDAR():
 
     def convert_3d(self, func, pos1, pos2, dir):
         mirror_d = 0.04 * dir
-        a = func[0]
-        b = func[1] - mirror_d
+        a = func[0] * dir
+        b = (func[1] - mirror_d) * dir
 
         x1 = pos1
         y1 = mirror_d
-        z1 = (a * pos1 + b) * dir
+        z1 = a * pos1 + b
         x2 = pos2
         y2 = mirror_d
-        z2 = (a * pos2 + b) * dir
+        z2 = a * pos2 + b
         position = [x1, y1, z1, x2, y2, z2]
-        return position
+        func_3d = [a, b]
 
-    def calc_base_vector(self, data):
-        return soiya
+        return position, func_3d
+
+    def calc_base_vector(self, func_R, func_L):
+        Ar = func_R[0]
+        Br = func_R[1]
+        Al = func_L[0]
+        Bl = func_L[1]
+        Ax = (Ar + Al)/2
+        xtan = -1 / Ax
+        th_x = np.degrees(np.arctan(xtan))
+        
+        return th_x
 
     def coordinate_transform(self, data):
+
         return soiya
 
 

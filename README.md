@@ -10,4 +10,6 @@
 sudo apt-get install ros-${ROS_DISTRO}-urg-node
 
 sudo chmod a+rw /dev/ttyACM0
+
+rosrun urg_node urg_node _serial_port:="/dev/ttyACM0"
 ```
