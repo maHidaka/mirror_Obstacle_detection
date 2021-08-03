@@ -32,16 +32,19 @@ class MirrorLiDAR():
         right_data = self.divide_scan_data(data, 1.6, 2.09)
         left_data = self.divide_scan_data(data, -2.05, -1.5)
 
+        # calc fit line L,R
         func_R, x_R = self.calc_fitting_curve(right_data)
         line_pos_R = self.calc_positon_XY(func_R, x_R[0], x_R[1])
-        fit_r = self.calc_marker(line_pos_R, data.header.stamp)
-
+        #fit_r = self.calc_marker(line_pos_R, data.header.stamp)
         func_L, x_L = self.calc_fitting_curve(left_data)
         line_pos_L = self.calc_positon_XY(func_L, x_L[0], x_L[1])
-        fit_l = self.calc_marker(line_pos_L, data.header.stamp)
+        #fit_l = self.calc_marker(line_pos_L, data.header.stamp)
 
-        #fit_r = self.calc_marker(self.calc_fitting_curve(right_data), data.header.stamp)
-        #fit_l = self.calc_marker(self.calc_fitting_curve(left_data), data.header.stamp)
+        bottom_r = self.convert_3d(func_R, x_R[0], x_R[1], 1)
+        fit_r = self.calc_marker(bottom_r, data.header.stamp)
+
+        bottom_l = self.convert_3d(func_L, x_L[0], x_L[1], -1)
+        fit_l = self.calc_marker(bottom_l, data.header.stamp)
 
         self.pub_scan_front.publish(front_data)
         self.pub_scan_right.publish(right_data)
@@ -147,8 +150,19 @@ class MirrorLiDAR():
         marker_data.points.append(second_point)
         return marker_data
 
-    def convert_3d(self, data):
-        return soiya
+    def convert_3d(self, func, pos1, pos2, dir):
+        mirror_d = 0.04 * dir
+        a = func[0]
+        b = func[1] - mirror_d
+
+        x1 = pos1
+        y1 = mirror_d
+        z1 = (a * pos1 + b) * dir
+        x2 = pos2
+        y2 = mirror_d
+        z2 = (a * pos2 + b) * dir
+        position = [x1, y1, z1, x2, y2, z2]
+        return position
 
     def calc_base_vector(self, data):
         return soiya
