@@ -179,7 +179,7 @@ class MirrorLiDAR():
         xtan = -Ax
         th_x = np.degrees(np.arctan(xtan))
 
-        ytan = (Br - Bl) / mirror_d
+        ytan = (Br - Bl) / (2*mirror_d)
         th_y = np.degrees(np.arctan(ytan))
 
         return th_x, th_y
