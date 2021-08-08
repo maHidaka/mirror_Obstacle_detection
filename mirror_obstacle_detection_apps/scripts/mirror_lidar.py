@@ -143,7 +143,17 @@ class MirrorLiDAR():
 
         return y
 
-    def calc_marker(self, pos, time):
+
+
+#   calc_marker
+#   markerトピックのデータ作成
+#   引数：calc_marker( list pos[x1,y1,z1,x2,y2,z2], time)
+#       data    フィッティングしたい点群を含むスキャンデータ
+#   返り値:list func[float slope,float intercept], list pos[float x_begin, float x_end]
+#       func[slope, intercept]      フィッティングした関数の傾きslopeと切片interceptをリストで返す
+#       pos[x_begin, x_end]         近似直線の表示用にスキャンデータの直交座標系でのX座標の始点と終点をリストで返す
+#
+    def calc_marker(self, pos, std_msgs/Header headertime):
         marker_data = Marker()
         marker_data.header.frame_id = "laser"
         marker_data.ns = "soiya"
