@@ -68,7 +68,6 @@ class MirrorLiDAR():
 #   返り値: LaserScan input_data
 #
 
-
     def divide_scan_data(self, data, begin, end):
         input_data = copy.deepcopy(data)
         angle_rates = np.arange(
@@ -91,6 +90,7 @@ class MirrorLiDAR():
 #       x   x座標
 #       y   y座標
 #
+
     def getXY(self, r, rad):
         x = r * np.cos(rad)
         y = r * np.sin(rad)
@@ -129,12 +129,14 @@ class MirrorLiDAR():
 
 #   calc_function
 #   一次関数の傾きと切片、x座標からy座標を求める
-#   引数：calc_fitting_curve(LaserScan data)
+#   引数：calc_function(list func[slope, intercpt], list x[x_begin, x_end])
 #       data    フィッティングしたい点群を含むスキャンデータ
 #   返り値:list func[float slope,float intercept], list pos[float x_begin, float x_end]
 #       func[slope, intercept]      フィッティングした関数の傾きslopeと切片interceptをリストで返す
 #       pos[x_begin, x_end]         近似直線の表示用にスキャンデータの直交座標系でのX座標の始点と終点をリストで返す
 #
+
+
     def calc_function(self, func, x):
         a = func[0]
         b = func[1]
@@ -142,7 +144,6 @@ class MirrorLiDAR():
         y = a * x + b
 
         return y
-
 
 
 #   calc_marker
@@ -153,6 +154,7 @@ class MirrorLiDAR():
 #       func[slope, intercept]      フィッティングした関数の傾きslopeと切片interceptをリストで返す
 #       pos[x_begin, x_end]         近似直線の表示用にスキャンデータの直交座標系でのX座標の始点と終点をリストで返す
 #
+
     def calc_marker(self, pos, std_msgs/Header headertime):
         marker_data = Marker()
         marker_data.header.frame_id = "laser"
