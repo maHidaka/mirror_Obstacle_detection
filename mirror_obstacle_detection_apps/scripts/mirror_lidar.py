@@ -44,7 +44,7 @@ class MirrorLiDAR():
         bottom_l = self.convert_3d(func_L, x_L[0], x_L[1], -1)
         fit_l = self.calc_marker(bottom_l[0], data.header.stamp)
 
-        A = self.calc_base_vector(bottom_r[1], bottom_l[1])
+        A = self.calc_base_axis(bottom_r[1], bottom_l[1])
         print(A)
 
         self.pub_scan_front.publish(front_data)
@@ -102,7 +102,7 @@ class MirrorLiDAR():
 #       data    フィッティングしたい点群を含むスキャンデータ
 #   返り値:list func[float slope,float intercept], list pos[float x_begin, float x_end]
 #       func[slope, intercept]      フィッティングした関数の傾きslopeと切片interceptをリストで返す
-#       pos[x_begin, x_end]         近似直線の表示用にスキャンデータの直交座標系でのX座標の始点と終点をリストで返す
+#       pos[x_begin, x_end]         スキャンデータの直交座標系でのX座標の始点と終点をリストで返す
 #
     def calc_fitting_curve(self, data):
         angle = data.angle_min
@@ -131,11 +131,9 @@ class MirrorLiDAR():
 #   一次関数の傾きと切片、x座標からy座標を求める
 #   引数：calc_function(list func[slope, intercpt], list x[x_begin, x_end])
 #       data    フィッティングしたい点群を含むスキャンデータ
-#   返り値:list func[float slope,float intercept], list pos[float x_begin, float x_end]
-#       func[slope, intercept]      フィッティングした関数の傾きslopeと切片interceptをリストで返す
-#       pos[x_begin, x_end]         近似直線の表示用にスキャンデータの直交座標系でのX座標の始点と終点をリストで返す
+#   返り値:float y
+#       y       y=ax+bのyの値
 #
-
 
     def calc_function(self, func, x):
         a = func[0]
@@ -147,13 +145,13 @@ class MirrorLiDAR():
 
 
 #   calc_marker
-#   markerトピックのデータ作成
-#   引数：calc_marker( list pos[x1,y1,z1,x2,y2,z2], time)
-#       data    フィッティングしたい点群を含むスキャンデータ
-#   返り値:list func[float slope,float intercept], list pos[float x_begin, float x_end]
-#       func[slope, intercept]      フィッティングした関数の傾きslopeと切片interceptをリストで返す
-#       pos[x_begin, x_end]         近似直線の表示用にスキャンデータの直交座標系でのX座標の始点と終点をリストで返す
-#
+#   直線のmarkerトピックのデータ作成
+#   引数：calc_marker( list pos[x1,y1,z1,x2,y2,z2], std_msgs/Header time)
+#       pos[x1,y1,z1,x2,y2,z2]      表示する直線の始点のxyz座標,終点のxyz座標
+#       time                        トピックのheadertime
+#   返り値:std_msgs/Header marker_data
+#         marker_data       引数で与えられた点間を結ぶ直線をrvizで表示できる形式にしたmarkerデータ
+
 
     def calc_marker(self, pos, std_msgs/Header headertime):
         marker_data = Marker()
@@ -167,16 +165,19 @@ class MirrorLiDAR():
         marker_data.pose.position.y = 0.0
         marker_data.pose.position.z = 0.0
 
+        # クォータニオン
         marker_data.pose.orientation.x = 0.0
         marker_data.pose.orientation.y = 0.0
         marker_data.pose.orientation.z = 0.0
         marker_data.pose.orientation.w = 1.0
 
+        # 色設定
         marker_data.color.r = 0.0
         marker_data.color.g = 1.0
         marker_data.color.b = 0.0
         marker_data.color.a = 1.0
 
+        # 直線のサイズ設定
         marker_data.scale.x = 0.005
         marker_data.scale.y = 0.005
         marker_data.scale.z = 0.005
@@ -186,12 +187,14 @@ class MirrorLiDAR():
 
         marker_data.points = []
 
+        # 始点の座標
         first_point = Point()
         first_point.x = pos[0]
         first_point.y = pos[1]
         first_point.z = pos[2]
         marker_data.points.append(first_point)
 
+        # 終点の座標
         second_point = Point()
         second_point.x = pos[3]
         second_point.y = pos[4]
@@ -199,11 +202,34 @@ class MirrorLiDAR():
         marker_data.points.append(second_point)
         return marker_data
 
+
+#   convert_3d
+#   鏡で反射された部分のデータを三次元へ変換する(鏡の位置を境にZ方向へ折り返す)
+#   引数：convert_3d(list func[float slope, float intercept], pos1, pos2, dir)
+#           func[float slope, float intercept]  1次関数の傾きslope, 切片intercept
+#           pos1                                始点x座標
+#           pos2                                終点x座標
+#           dir                                 スキャンデータをどちらに折り返すかのフラグ left側scanなら0,rightなら1
+#
+#   返り値: position[x1,y1,z1,x2,y2,z2], func_3d[a,b]
+#         position      marker_data用の直線の始点と終点の座標
+#         func_3d       ZX平面上での1次関数
+#               a 傾き
+#               b 切片
+#
+
+
     def convert_3d(self, func, pos1, pos2, dir):
         mirror_d = 0.04 * dir
+
+        # 傾きを左右のデータごとに最終的にZ軸下向きになるようにする
         a = func[0] * dir
+
+        # 切片から鏡までの距離を引く
         b = (func[1] - mirror_d) * dir
 
+        # 鏡まではXY平面、鏡より先はZX平面に変換
+        # ZX平面は原点からY方向に鏡までの距離をオフセットした位置での平面になる
         x1 = pos1
         y1 = mirror_d
         z1 = a * pos1 + b
@@ -215,7 +241,19 @@ class MirrorLiDAR():
 
         return position, func_3d
 
-    def calc_base_vector(self, func_R, func_L):
+
+#   calc_base_axis
+#   測定平面のX,Y,Z軸を求める
+#   引数：calc_base_axis(list func_R, list func_L)
+#           func_R [float slope_R, float intercept_R]  1次関数の傾きslope, 切片intercept
+#           func_L [float slope_L, float intercept_L]  1次関数の傾きslope, 切片intercept
+#
+#   返り値: th_x, th_y
+#         th_x      測定平面とセンサ座標系のX軸のなす角(pitch)
+#         th_y      測定平面とセンサ座標系のY軸のなす角(Roll)
+#
+
+    def calc_base_axis(self, func_R, func_L):
         mirror_d = 0.04
         Ar = func_R[0]
         Br = func_R[1]
@@ -230,9 +268,20 @@ class MirrorLiDAR():
 
         return th_x, th_y
 
+
+#   coordinate_transform
+#   測定平面からみたセンサの傾きを使って、スキャンデータの座標変換を行う
+#   引数：coordinate_transform(front_scan_data, th_x, th_y)
+#
+#
+#   返り値: th_x, th_y
+#         th_x      測定平面から見たときのセンサのXZ平面での傾き(pitch)
+#         th_y      測定平面から見たときのセンサのYZ平面での傾き(Roll)
+#
+
     def coordinate_transform(self, front_scan_data, th_x, th_y):
 
-        return soiya
+        return a
 
 
 if __name__ == '__main__':
