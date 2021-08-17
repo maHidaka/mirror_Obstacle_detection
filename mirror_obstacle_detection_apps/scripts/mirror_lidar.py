@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import rospy
+import rosparam
 from geometry_msgs.msg import Point
 from rospy.topics import Publisher
 from visualization_msgs.msg import Marker
@@ -13,8 +14,9 @@ import numpy as np
 
 
 class MirrorLiDAR():
-    def __init__(self):
 
+    def __init__(self):
+        self.mirror_d = 0.04
         self.sub_scan = rospy.Subscriber('scan', LaserScan, self.callback)
         self.pub_scan_front = rospy.Publisher(
             'scan_front', LaserScan, queue_size=1)
@@ -220,21 +222,21 @@ class MirrorLiDAR():
 
 
     def convert_3d(self, func, pos1, pos2, dir):
-        mirror_d = 0.04 * dir
+        offset = self.mirror_d * dir
 
         # 傾きを左右のデータごとに最終的にZ軸下向きになるようにする
         a = func[0] * dir
 
         # 切片から鏡までの距離を引く
-        b = (func[1] - mirror_d) * dir
+        b = (func[1] - offset) * dir
 
         # 鏡まではXY平面、鏡より先はZX平面に変換
         # ZX平面は原点からY方向に鏡までの距離をオフセットした位置での平面になる
         x1 = pos1
-        y1 = mirror_d
+        y1 = offset
         z1 = a * pos1 + b
         x2 = pos2
-        y2 = mirror_d
+        y2 = offset
         z2 = a * pos2 + b
         position = [x1, y1, z1, x2, y2, z2]
         func_3d = [a, b]
@@ -254,7 +256,6 @@ class MirrorLiDAR():
 #
 
     def calc_base_axis(self, func_R, func_L):
-        mirror_d = 0.04
         Ar = func_R[0]
         Br = func_R[1]
         Al = func_L[0]
@@ -263,7 +264,7 @@ class MirrorLiDAR():
         ytan = -Ax
         th_y = np.degrees(np.arctan(ytan))
 
-        xtan = (Br - Bl) / (2*mirror_d)
+        xtan = (Br - Bl) / (2 * self.mirror_d)
         th_x = np.degrees(np.arctan(xtan))
 
         return th_x, th_y
