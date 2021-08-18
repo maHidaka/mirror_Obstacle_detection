@@ -1,0 +1,10 @@
+<launch>
+
+    <!-- param -->
+
+
+    <!-- Launch the mirror lidar node -->
+    <node name="mirror_lidar" pkg="mirror_obstacle_detection_apps" type="mirror_lidar.py" output="screen" ">
+    </node>
+
+</launch>

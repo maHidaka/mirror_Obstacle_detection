@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <!-- urg node -->
+    <node pkg="urg_node" type="urg_node" name="urg_node0">
+        <param name="serial_port"        value="/dev/ttyACM0" />
+    </node>
+
+
+    <!-- mirror_obstacle_ditecton node -->
+    <node pkg="" type="base_driver" name="base_driver">
+
+    </node>
+</launch>

@@ -27,6 +27,13 @@ class MirrorLiDAR():
         self.pub_fit_r = rospy.Publisher('fit_line_R', Marker, queue_size=1)
         self.pub_fit_l = rospy.Publisher('fit_line_L', Marker, queue_size=1)
 
+
+#   callback
+#   scanトピックの更新時に呼ばれるコールバック関数
+#   引数：callback(LaserScan data)
+#       data    LiDARのスキャン生データ
+#
+
     def callback(self, data):
         front_data = self.divide_scan_data(data, -1, 1)
         right_data = self.divide_scan_data(data, 1.6, 2.09)
@@ -55,11 +62,6 @@ class MirrorLiDAR():
         self.pub_fit_r.publish(fit_r)
         self.pub_fit_l.publish(fit_l)
 
-    def Publisher(self, front, right, left):
-        self.pub_scan_front.publish(front)
-        self.pub_scan_right.publish(right)
-        self.pub_scan_left.publish(left)
-
 
 #   divide_scan_data
 #   スキャンデータから取得角度に基づいてターゲット範囲のスキャンデータを取り出す
@@ -69,6 +71,7 @@ class MirrorLiDAR():
 #       end     ターゲットの終了角度
 #   返り値: LaserScan input_data
 #
+
 
     def divide_scan_data(self, data, begin, end):
         input_data = copy.deepcopy(data)
@@ -92,6 +95,7 @@ class MirrorLiDAR():
 #       x   x座標
 #       y   y座標
 #
+
 
     def getXY(self, r, rad):
         x = r * np.cos(rad)
@@ -137,6 +141,7 @@ class MirrorLiDAR():
 #       y       y=ax+bのyの値
 #
 
+
     def calc_function(self, func, x):
         a = func[0]
         b = func[1]
@@ -153,7 +158,6 @@ class MirrorLiDAR():
 #       time                        トピックのheadertime
 #   返り値:std_msgs/Header marker_data
 #         marker_data       引数で与えられた点間を結ぶ直線をrvizで表示できる形式にしたmarkerデータ
-
 
     def calc_marker(self, pos, std_msgs/Header headertime):
         marker_data = Marker()
@@ -220,7 +224,6 @@ class MirrorLiDAR():
 #               b 切片
 #
 
-
     def convert_3d(self, func, pos1, pos2, dir):
         offset = self.mirror_d * dir
 
@@ -255,6 +258,7 @@ class MirrorLiDAR():
 #         th_y      測定平面とセンサ座標系のY軸のなす角(Roll)
 #
 
+
     def calc_base_axis(self, func_R, func_L):
         Ar = func_R[0]
         Br = func_R[1]
@@ -279,6 +283,7 @@ class MirrorLiDAR():
 #         th_x      測定平面から見たときのセンサのXZ平面での傾き(pitch)
 #         th_y      測定平面から見たときのセンサのYZ平面での傾き(Roll)
 #
+
 
     def coordinate_transform(self, front_scan_data, th_x, th_y):
 
