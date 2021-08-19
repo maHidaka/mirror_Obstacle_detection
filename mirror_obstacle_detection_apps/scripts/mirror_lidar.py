@@ -35,27 +35,39 @@ class MirrorLiDAR():
 #
 
     def callback(self, data):
+
+        # スキャンデータを指定した範囲でトリム
         front_data = self.divide_scan_data(data, -1, 1)
         right_data = self.divide_scan_data(data, 1.6, 2.09)
         left_data = self.divide_scan_data(data, -2.05, -1.5)
 
-        # calc fit line L,R
+        # 左右の鏡で反射したスキャンデータの近似直線を計算
         func_R, x_R = self.calc_fitting_curve(right_data)
-        line_pos_R = self.calc_function(func_R, x_R[0], x_R[1])
-        #fit_r = self.calc_marker(line_pos_R, data.header.stamp)
         func_L, x_L = self.calc_fitting_curve(left_data)
-        line_pos_L = self.calc_function(func_L, x_L[0], x_L[1])
+
+        # それぞれの近似直線の方程式から２点(Xの最小と最大についてのY)のXY座標を計算
+        #line_pos_R = self.calc_function(func_R, x_R[0], x_R[1])
+        #fit_r = self.calc_marker(line_pos_R, data.header.stamp)
+        #line_pos_L = self.calc_function(func_L, x_L[0], x_L[1])
         #fit_l = self.calc_marker(line_pos_L, data.header.stamp)
+        line_pos_R = [self.calc_function(
+            func_R, x_R[0]), self.calc_function(func_R, x_R[1])]
+        line_pos_L = [self.calc_function(
+            func_L, x_L[0]), self.calc_function(func_L, x_L[1])]
 
+        # 鏡の点群の近似直線を３次元へ変換
         bottom_r = self.convert_3d(func_R, x_R[0], x_R[1], 1)
-        fit_r = self.calc_marker(bottom_r[0], data.header.stamp)
-
         bottom_l = self.convert_3d(func_L, x_L[0], x_L[1], -1)
+
+        # 計測平面の近似直線を表示するためのマーカーデータの作成
+        fit_r = self.calc_marker(bottom_r[0], data.header.stamp)
         fit_l = self.calc_marker(bottom_l[0], data.header.stamp)
 
+        # 計測平面からセンサのピッチとロールの傾きを表示
         A = self.calc_base_axis(bottom_r[1], bottom_l[1])
         print(A)
 
+        # パブリッシュ
         self.pub_scan_front.publish(front_data)
         self.pub_scan_right.publish(right_data)
         self.pub_scan_left.publish(left_data)
@@ -159,12 +171,12 @@ class MirrorLiDAR():
 #   返り値:std_msgs/Header marker_data
 #         marker_data       引数で与えられた点間を結ぶ直線をrvizで表示できる形式にしたmarkerデータ
 
-    def calc_marker(self, pos, std_msgs/Header headertime):
+    def calc_marker(self, pos, headertime):
         marker_data = Marker()
         marker_data.header.frame_id = "laser"
         marker_data.ns = "soiya"
         marker_data.id = 0
-        marker_data.header.stamp = time
+        marker_data.header.stamp = headertime
         marker_data.action = Marker.ADD
 
         marker_data.pose.position.x = 0.0
