@@ -1,8 +1,8 @@
 <launch>
 
     <!-- Launch the mirror lidar node -->
-    <node name="mirror_lidar" pkg="mirror_obstacle_detection_apps" type="mirror_lidar.py" >
-    
+    <node name="mirror_lidar" pkg="mirror_obstacle_detection_apps" type="mirror_lidar.py" output="screen">
+        <rosparam file="$(find mirror_obstacle_detection_description)/config/mirror_lidar_params.yaml" command="load" />
     </node>
 
 </launch>
