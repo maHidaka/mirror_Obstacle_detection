@@ -1,0 +1,5 @@
+<launch>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find mirror_obstacle_detection_description)/config/display.rviz" required="true" />
+
+</launch>

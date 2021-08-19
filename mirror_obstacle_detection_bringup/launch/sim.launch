@@ -2,11 +2,6 @@
 
 <launch>
 
-    <!-- urg node -->
-    <node pkg="urg_node" type="urg_node" name="urg_node0">
-        <param name="serial_port" value="/dev/ttyACM0" />
-    </node>
-
     <!-- mirror_obstacle_ditecton node -->
     <include file="$(find mirror_obstacle_detection_apps)/launch/mirror_lidar.launch">
 
