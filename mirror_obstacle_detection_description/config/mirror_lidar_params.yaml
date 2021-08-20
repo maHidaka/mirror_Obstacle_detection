@@ -1,1 +1,7 @@
 mirror_d: 0.04
+scan_front_begin: -1
+scan_front_end: 1
+scan_left_begin: 1.6
+scan_left_end: 2.09
+scan_right_begin: -2.05
+scan_right_end: -1.5
