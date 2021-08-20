@@ -6,10 +6,35 @@
 
 ## 環境構築
 
+- このリポジトリを catkin_ws/src にクローン
+
 ```
 sudo apt-get install ros-${ROS_DISTRO}-urg-node
 
-sudo chmod a+rw /dev/ttyACM0
+```
 
-rosrun urg_node urg_node _serial_port:="/dev/ttyACM0"
+## 使用方法
+
+### ミラー搭載型 URG を使う
+
+```
+sudo chmod a+rw /dev/ttyACM0
+```
+
+```
+roslaunch mirror_obstacle_detection_bringup mirror_lidar.launch
+```
+
+### rosbag を使う
+
+```
+roslaunch mirror_obstacle_detection_bringup sim.launch
+```
+
+```
+roscd mirror_obstacle_detection_description/bagfiles
+```
+
+```
+rosbag play -l 2021-08-03-15-49-11.bag
 ```
