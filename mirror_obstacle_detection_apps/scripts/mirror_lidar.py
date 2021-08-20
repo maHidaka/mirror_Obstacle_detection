@@ -20,28 +20,19 @@ class MirrorLiDAR():
 
         try:
             self.mirror_d = rospy.get_param("/mirror_lidar/mirror_d", 0.04)
-            self.scan_front_begin = rospy.get_param(
-                "/mirror_lidar/scan_front_begin", -1)
-            self.scan_front_end = rospy.get_param(
-                "/mirror_lidar/scan_front_end", 1)
-            self.scan_left_begin = rospy.get_param(
-                "/mirror_lidar/scan_left_begin", 1.6)
-            self.scan_left_end = rospy.get_param(
-                "/mirror_lidar/scan_left_end", 2.09)
-            self.scan_right_begin = rospy.get_param(
-                "/mirror_lidar/scan_right_begin", -2.05)
-            self.scan_right_end = rospy.get_param(
-                "/mirror_lidar/scan_right_end", -1.5)
+            self.scan_front_begin = rospy.get_param("/mirror_lidar/scan_front_begin", -1)
+            self.scan_front_end = rospy.get_param("/mirror_lidar/scan_front_end", 1)
+            self.scan_left_begin = rospy.get_param("/mirror_lidar/scan_left_begin", 1.6)
+            self.scan_left_end = rospy.get_param("/mirror_lidar/scan_left_end", 2.09)
+            self.scan_right_begin = rospy.get_param("/mirror_lidar/scan_right_begin", -2.05)
+            self.scan_right_end = rospy.get_param("/mirror_lidar/scan_right_end", -1.5)
         except ROSException:
             rospy.loginfo("param load error")
 
         self.sub_scan = rospy.Subscriber('scan', LaserScan, self.callback)
-        self.pub_scan_front = rospy.Publisher(
-            'scan_front', LaserScan, queue_size=1)
-        self.pub_scan_right = rospy.Publisher(
-            'scan_right', LaserScan, queue_size=1)
-        self.pub_scan_left = rospy.Publisher(
-            'scan_left', LaserScan, queue_size=1)
+        self.pub_scan_front = rospy.Publisher('scan_front', LaserScan, queue_size=1)
+        self.pub_scan_right = rospy.Publisher('scan_right', LaserScan, queue_size=1)
+        self.pub_scan_left = rospy.Publisher('scan_left', LaserScan, queue_size=1)
         self.pub_fit_r = rospy.Publisher('fit_line_R', Marker, queue_size=1)
         self.pub_fit_l = rospy.Publisher('fit_line_L', Marker, queue_size=1)
 
@@ -67,10 +58,8 @@ class MirrorLiDAR():
         #fit_r = self.calc_marker(line_pos_R, data.header.stamp)
         #line_pos_L = self.calc_function(func_L, x_L[0], x_L[1])
         #fit_l = self.calc_marker(line_pos_L, data.header.stamp)
-        line_pos_R = [self.calc_function(
-            func_R, x_R[0]), self.calc_function(func_R, x_R[1])]
-        line_pos_L = [self.calc_function(
-            func_L, x_L[0]), self.calc_function(func_L, x_L[1])]
+        line_pos_R = [self.calc_function(func_R, x_R[0]), self.calc_function(func_R, x_R[1])]
+        line_pos_L = [self.calc_function(func_L, x_L[0]), self.calc_function(func_L, x_L[1])]
 
         # 鏡の点群の近似直線を３次元へ変換
         bottom_r = self.convert_3d(func_R, x_R[0], x_R[1], 1)
@@ -101,11 +90,9 @@ class MirrorLiDAR():
 #   返り値: LaserScan input_data
 #
 
-
     def divide_scan_data(self, data, begin, end):
         input_data = copy.deepcopy(data)
-        angle_rates = np.arange(
-            input_data.angle_min, input_data.angle_max, input_data.angle_increment)
+        angle_rates = np.arange(input_data.angle_min, input_data.angle_max, input_data.angle_increment)
         target_index = np.where((angle_rates >= begin) & (angle_rates <= end))
         target_index = target_index[0]
         target_ranges = input_data.ranges[target_index[0]:target_index[-1]]
@@ -124,7 +111,6 @@ class MirrorLiDAR():
 #       x   x座標
 #       y   y座標
 #
-
 
     def getXY(self, r, rad):
         x = r * np.cos(rad)
@@ -170,7 +156,6 @@ class MirrorLiDAR():
 #       y       y=ax+bのyの値
 #
 
-
     def calc_function(self, func, x):
         a = func[0]
         b = func[1]
@@ -187,6 +172,7 @@ class MirrorLiDAR():
 #       time                        トピックのheadertime
 #   返り値:std_msgs/Header marker_data
 #         marker_data       引数で与えられた点間を結ぶ直線をrvizで表示できる形式にしたmarkerデータ
+
 
     def calc_marker(self, pos, headertime):
         marker_data = Marker()
@@ -253,6 +239,7 @@ class MirrorLiDAR():
 #               b 切片
 #
 
+
     def convert_3d(self, func, pos1, pos2, dir):
         offset = self.mirror_d * dir
 
@@ -287,7 +274,6 @@ class MirrorLiDAR():
 #         th_y      測定平面とセンサ座標系のY軸のなす角(Roll)
 #
 
-
     def calc_base_axis(self, func_R, func_L):
         Ar = func_R[0]
         Br = func_R[1]
@@ -312,7 +298,6 @@ class MirrorLiDAR():
 #         th_x      測定平面から見たときのセンサのXZ平面での傾き(pitch)
 #         th_y      測定平面から見たときのセンサのYZ平面での傾き(Roll)
 #
-
 
     def coordinate_transform(self, front_scan_data, th_x, th_y):
 
