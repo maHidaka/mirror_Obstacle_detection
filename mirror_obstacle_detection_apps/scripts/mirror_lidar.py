@@ -96,8 +96,8 @@ class MirrorLiDAR():
 #   スキャンデータから取得角度に基づいてターゲット範囲のスキャンデータを取り出す
 #   引数：divide_scan_data(LaserScan data, float begin, float end)
 #       data    LiDARのスキャン生データ
-#       begin   ターゲットの開始角度
-#       end     ターゲットの終了角度
+#       begin   ターゲットの開始角度[rad]
+#       end     ターゲットの終了角度[rad]
 #   返り値: LaserScan input_data
 #
 
