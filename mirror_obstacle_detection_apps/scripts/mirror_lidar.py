@@ -3,6 +3,7 @@
 
 import rospy
 import rosparam
+import tf
 from geometry_msgs.msg import Point
 from rospy.exceptions import ROSException
 from rospy.topics import Publisher
@@ -12,6 +13,7 @@ from std_msgs.msg import Header
 
 import copy
 import numpy as np
+
 
 
 class MirrorLiDAR():
@@ -35,6 +37,10 @@ class MirrorLiDAR():
         self.pub_scan_left = rospy.Publisher('scan_left', LaserScan, queue_size=1)
         self.pub_fit_r = rospy.Publisher('fit_line_R', Marker, queue_size=1)
         self.pub_fit_l = rospy.Publisher('fit_line_L', Marker, queue_size=1)
+
+
+
+
 
 #   callback
 #   scanトピックの更新時に呼ばれるコールバック関数
@@ -70,15 +76,19 @@ class MirrorLiDAR():
         fit_l = self.calc_marker(bottom_l[0], data.header.stamp)
 
         # 計測平面からセンサのピッチとロールの傾きを表示
-        A = self.calc_base_axis(bottom_r[1], bottom_l[1])
-        # print(A)
+        pose = self.calc_pose(bottom_r[1], bottom_l[1])
+        #print(A)
 
+        self.broadcast_pose(pose[0], pose[1], pose[2])
         # パブリッシュ
         self.pub_scan_front.publish(front_data)
         self.pub_scan_right.publish(right_data)
         self.pub_scan_left.publish(left_data)
         self.pub_fit_r.publish(fit_r)
         self.pub_fit_l.publish(fit_l)
+
+
+
 
 
 #   divide_scan_data
@@ -102,6 +112,9 @@ class MirrorLiDAR():
         return input_data
 
 
+
+
+
 #   getXY
 #   極座標から直行座標へ変換
 #   引数：getXY(any r, any rad)
@@ -116,6 +129,9 @@ class MirrorLiDAR():
         x = r * np.cos(rad)
         y = r * np.sin(rad)
         return x, y
+
+
+
 
 #   calc_fitting_curve
 #   与えられたスキャンデータを一次最小二乗法でフィッテング
@@ -140,12 +156,11 @@ class MirrorLiDAR():
                 print("range value is NaN")
 
         fit_line = np.polyfit(np.array(x), np.array(y), 1)
-        #pos = list(fit_line)
-        #pos.extend([x[0], x[-1]])
         func = list(fit_line)
         pos = [x[0], x[-1]]
 
         return func, pos
+
 
 
 #   calc_function
@@ -163,6 +178,9 @@ class MirrorLiDAR():
         y = a * x + b
 
         return y
+
+
+
 
 
 #   calc_marker
@@ -224,6 +242,10 @@ class MirrorLiDAR():
         return marker_data
 
 
+
+
+
+
 #   convert_3d
 #   鏡で反射された部分のデータを三次元へ変換する(鏡の位置を境にZ方向へ折り返す)
 #   引数：convert_3d(list func[float slope, float intercept], pos1, pos2, dir)
@@ -238,7 +260,6 @@ class MirrorLiDAR():
 #               a 傾き
 #               b 切片
 #
-
 
     def convert_3d(self, func, pos1, pos2, dir):
         offset = self.mirror_d * dir
@@ -263,45 +284,71 @@ class MirrorLiDAR():
         return position, func_3d
 
 
-#   calc_base_axis
-#   測定平面のX,Y,Z軸を求める
-#   引数：calc_base_axis(list func_R, list func_L)
+
+
+
+
+#   calc_pose
+#   慣性座標系(測定平面)から見たlidarの傾きを計算する
+#   引数：calc_pose(list func_R, list func_L)
 #           func_R [float slope_R, float intercept_R]  1次関数の傾きslope, 切片intercept
 #           func_L [float slope_L, float intercept_L]  1次関数の傾きslope, 切片intercept
 #
-#   返り値: th_x, th_y
-#         th_x      測定平面とセンサ座標系のX軸のなす角(pitch)
-#         th_y      測定平面とセンサ座標系のY軸のなす角(Roll)
-#
+#   返り値: roll, pitch
+#         roll      測定平面とセンサ座標系のX軸のなす角(pitch)
+#         pitch      測定平面とセンサ座標系のY軸のなす角(Roll)
+#           hight       測定座標系から見たurgの高さ
 
-    def calc_base_axis(self, func_R, func_L):
+    def calc_pose(self, func_R, func_L):
         Ar = func_R[0]
         Br = func_R[1]
         Al = func_L[0]
         Bl = func_L[1]
-        Ax = (Ar + Al)/2
-        ytan = -Ax
-        th_y = np.degrees(np.arctan(ytan))
 
-        xtan = (Br - Bl) / (2 * self.mirror_d)
-        th_x = np.degrees(np.arctan(xtan))
+        # pitch
+        Ax = (Ar + Al)/2    #測定平面を決定するために２直線の傾きの平均を取る
+        #測定平面の傾きAxから、測定平面とセンサ座標系XY平面のなす角(pitch)を求める
+        ytan = Ax          
+        pitch = np.arctan(ytan)  #逆三角関数で解く
 
-        return th_x, th_y
+        # roll
+        # センサ座標系y軸とそれぞれの近似直線の切片の差を２枚の鏡の距離で割ってtanを出す
+        xtan = (Bl - Br) / (2 * self.mirror_d)
+        roll = np.arctan(xtan)
+
+        # hight
+        
+        #切片の平均を取ってセンサ座標系Z軸の地面までの距離を出す
+        Bc = (Bl+Br)/2
+
+        hight = np.cos(roll) * np.cos(pitch) * Bc
+
+        print(pitch)
 
 
-#   coordinate_transform
-#   測定平面からみたセンサの傾きを使って、スキャンデータの座標変換を行う
-#   引数：coordinate_transform(front_scan_data, th_x, th_y)
+        return roll, pitch, hight
+
+
+
+
+
+#   broadcast_pose
+#   tfにlidarの姿勢をブロードキャストする
+#   引数：broadcast_pose(self, roll, pitch, hight)
 #
-#
-#   返り値: th_x, th_y
-#         th_x      測定平面から見たときのセンサのXZ平面での傾き(pitch)
-#         th_y      測定平面から見たときのセンサのYZ平面での傾き(Roll)
+#   返り値: なし
 #
 
-    def coordinate_transform(self, front_scan_data, th_x, th_y):
+    def broadcast_pose(self, roll, pitch, hight):
 
-        return a
+        br = tf.TransformBroadcaster()
+        br.sendTransform((0,0,hight),
+                        #lidarは上下逆についているので座標を変換
+                        tf.transformations.quaternion_from_euler(-roll+np.pi,-pitch , 0),
+                        rospy.Time.now(),
+                        "measurement_plane",
+                        "laser")
+    
 
 
 if __name__ == '__main__':
@@ -309,3 +356,4 @@ if __name__ == '__main__':
     node = MirrorLiDAR()
     while not rospy.is_shutdown():
         rospy.sleep(0.1)
+
