@@ -11,11 +11,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  tf
+  laser_geometry
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(Eigen3 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -134,6 +136,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(divide_scan_data src/divide_scan_data.cpp)
+add_executable(convert_pointcloud src/convert_pointcloud.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -147,6 +150,7 @@ add_executable(divide_scan_data src/divide_scan_data.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(divide_scan_data ${catkin_LIBRARIES})
+target_link_libraries(convert_pointcloud ${catkin_LIBRARIES})
 
 #############
 ## Install ##
