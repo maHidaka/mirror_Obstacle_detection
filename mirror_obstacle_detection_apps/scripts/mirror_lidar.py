@@ -323,6 +323,7 @@ class MirrorLiDAR():
 
         hight = np.cos(roll) * np.cos(pitch) * Bc
 
+
         str = "hight = %s" % hight
         rospy.loginfo(str)
 
