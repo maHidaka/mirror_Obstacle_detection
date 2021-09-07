@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 import rospy
 import rosparam
 import tf
@@ -9,16 +8,11 @@ from geometry_msgs.msg import Point
 from rospy.exceptions import ROSException
 from rospy.topics import Publisher
 from visualization_msgs.msg import Marker
-
-from sensor_msgs.msg import LaserScan,PointCloud2
+from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Header
-
-import laser_geometry.laser_geometry as lg
-import sensor_msgs.point_cloud2 as pc2
 
 import copy
 import numpy as np
-
 
 
 
@@ -37,15 +31,12 @@ class MirrorLiDAR():
         except ROSException:
             rospy.loginfo("param load error")
 
-        self.lp = lg.LaserProjection()
-
         self.sub_scan = rospy.Subscriber('scan', LaserScan, self.callback)
         self.pub_scan_front = rospy.Publisher('scan_front', LaserScan, queue_size=1)
         self.pub_scan_right = rospy.Publisher('scan_right', LaserScan, queue_size=1)
         self.pub_scan_left = rospy.Publisher('scan_left', LaserScan, queue_size=1)
         self.pub_fit_r = rospy.Publisher('fit_line_R', Marker, queue_size=1)
         self.pub_fit_l = rospy.Publisher('fit_line_L', Marker, queue_size=1)
-        self.pc_pub = rospy.Publisher("converted_pc", PointCloud2, queue_size=1)
 
 
 
@@ -88,11 +79,6 @@ class MirrorLiDAR():
         pose = self.calc_pose(bottom_r[1], bottom_l[1])
         #print(A)
 
-
-
-        self.convert_LaserScan_to_PointCloud2( data)
-
-
         self.broadcast_pose(pose[0], pose[1], pose[2])
         # パブリッシュ
         self.pub_scan_front.publish(front_data)
@@ -100,7 +86,6 @@ class MirrorLiDAR():
         self.pub_scan_left.publish(left_data)
         self.pub_fit_r.publish(fit_r)
         self.pub_fit_l.publish(fit_l)
-        
 
 
 
@@ -338,7 +323,8 @@ class MirrorLiDAR():
 
         hight = np.cos(roll) * np.cos(pitch) * Bc
 
-        print(pitch)
+        str = "hight = %s" % hight
+        rospy.loginfo(str)
 
 
         return roll, pitch, hight
@@ -365,18 +351,6 @@ class MirrorLiDAR():
                         "laser")
     
 
-
-    def convert_LaserScan_to_PointCloud2(self, data):
-        pc2_msg = self.lp.projectLaser(data)
-        self.transform_PointCloud()
-        self.pc_pub.publish(pc2_msg)
-
-
-    def transform_PointCloud(self, data):
-        xyz_array = ros_numpy.point_cloud2.get_xyz_points(data)
-        print(xyz_array)
-        print("----------------------------------")
-        return xyz_array
 
 if __name__ == '__main__':
     rospy.init_node('fitting')
