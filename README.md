@@ -11,6 +11,7 @@
 ```
 sudo apt-get install ros-${ROS_DISTRO}-urg-node
 
+sudo apt install ros-${ROS_DISTRO}-ros-numpy
 ```
 
 ## 使用方法
